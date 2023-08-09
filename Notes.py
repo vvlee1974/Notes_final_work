@@ -1,28 +1,9 @@
-# Создать телефонный справочник с возможностью импорта и
-# экспорта данных в формате .txt. Фамилия, имя, отчество,
-# номер телефона - данные, которые должны находиться в файле.
-
-# Программа должна выводить данные
-# Программа должна сохранять данные в текстовом файле
-# Пользователь может ввести одну из характеристик для поиска 
-# определенной записи(Например имя или фамилию человека)
-# Использование функций. Ваша программа не должна быть линейной
-
-# Дополнить телефонный справочник возможностью изменения и
-# удаления данных. Пользователь также может ввести имя или фамилию,
-# и Вы должны реализовать функционал для изменения и удаления данных
-
-
-# r - только чтение файла
-# a - дозапись в файл
-# w - перезапись файла
 
 import csv
 import datetime
 from os import path
 
 file_base = "notes.csv"
-
 last_id = 0
 all_data = []
 
@@ -42,17 +23,26 @@ def read_records():
 
 
 def show_all():
+    global all_data
     if all_data:
-        print(*all_data, sep="\r\n")
+        with open(file_base, 'r', encoding='utf-8') as data:
+            reader = csv.reader(data, delimiter=';')
+            reader = sorted(reader, key=lambda x: datetime.datetime.strptime(x[3], '%Y-%m-%d == %H:%M:%S'), reverse=True)
+            for row in reader:
+                print(row)
     else:
-        print("Empty data\n============\n")
+        print("Empty data\n============")
 
 
 def confirmation(text: str): 
+    print("--------------------------")
     confirm = input(f"Подтвердите {text} записи: y - да, n - нет\n")
+    print("--------------------------")
     while confirm not in ("y", "n"):
         print('Введены неверные данные')
+        print("--------------------------")
         confirm = input(f"Подтвердите {text} записи: y - да, n - нет\n")
+        print("--------------------------")
     return confirm
 
 
@@ -65,11 +55,13 @@ def new_records():
         file_writer = csv.writer(data, delimiter=';', lineterminator='\r')
         title = input('Введите заголовок: ') 
         body = input('Введите текст заметки: ')  
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        print("--------------------------")
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d == %H:%M:%S')
         all_data = [int(last_id) + 1, title, body, timestamp]
         confirm = confirmation('добавление')
         if confirm == 'y':
             file_writer.writerow(all_data)
+            print('Успешное добавление записи!')
 
 
 def find_char():
@@ -87,7 +79,6 @@ def find_char():
     else:
         return 'q', 'q'
 
-
 def find_records(char, inp):
     if inp !='q':
         printed = False
@@ -104,16 +95,20 @@ def find_records(char, inp):
 def check_id_record(text: str):
     global last_id
     decision = input(f'Вы знаете id записи которую хотите {text}? 1 - да, 2 - нет, q - выйти\n')
+    print("--------------------------")
     while decision not in ('1', 'q'):
         if decision != '2':
             print('Введены неверные данные')
         else:
             find_records(*find_char())
         decision = input(f'Вы знаете id записи которую хотите {text}? 1 - да, 2 - нет, q - выйти\n')
+        print("--------------------------")
     if decision == '1':
         last_id = input('Введите id, q - выйти\n')
+        print("--------------------------")
         while not find_records('0', last_id) and last_id != 'q':
             last_id = input('Введите id, q - выйти\n')
+            print("--------------------------")
         return last_id
     return decision
 
@@ -128,6 +123,7 @@ def replace_record_line(replaced_line: str):
                 replaced = replaced.replace(line, replaced_line)
     with open(file_base, 'w', encoding='utf-8') as data:
         data.write(replaced)
+        print("--------------------------")
 
 
 def change_records():
@@ -136,10 +132,11 @@ def change_records():
     if last_id != 'q':
         title = input('Введите заголовок: ') 
         body = input('Введите текст заметки: ')  
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d == %H:%M:%S')
         all_data = [last_id, title, body, timestamp]
         confirm = confirmation('изменение')
         if confirm == 'y':
+            print("Успешное изменение записи!")
             replace_record_line(";".join(all_data)+ ' \n')
 
 
@@ -149,6 +146,7 @@ def delete_records():
     if last_id != 'q':
         confirm = confirmation('удаление')
         if confirm == 'y':
+            print("Успешное удаление записи!")
             replace_record_line('')
 
 
@@ -160,30 +158,28 @@ def main_menu():
                        "============\n"
                        "1. Show all records\n"
                        "2. Add a record\n"
-                       "3. Search a record\n"
-                       "4. Change\n"
-                       "5. Delete\n"
-                       "6. Exp/Imp\n"
-                       "7. Exit\n"
+                       "3. Change\n"
+                       "4. Delete\n"
+                       "5. Exit\n"
                         "============\n"
                         )
         match answer:
             case "1":
+                print("--------------------------")
                 show_all()
             case "2":
+                print("--------------------------")
                 new_records()
             case "3":
-                find_records(*find_char())
-            case "4":
+                print("--------------------------")
                 change_records()
+            case "4":
+                print("--------------------------")
+                delete_records()
             case "5":
-                 delete_records()
-            case "6":
-                pass
-            case "7":
                 play = False
             case _:
+                print("--------------------------")
                 print("Try again!\n")
-
 
 main_menu()

@@ -22,6 +22,7 @@ import datetime
 from os import path
 
 file_base = "notes.csv"
+
 last_id = 0
 all_data = []
 
@@ -32,63 +33,53 @@ if not path.exists(file_base):
 
 def read_records():
     global last_id, all_data
-    with open(file_base, encoding="utf-8") as file:
+    with open(file_base, 'r', encoding="utf-8") as file:
         all_data = [i.strip() for i in file]
         if all_data:
-            last_id = int(all_data[-1].split()[0])
+            last_id = int(all_data[-1].split(';')[0])
             return all_data
         return []
 
 
 def show_all():
     if all_data:
-        print(*all_data, sep="\n")
+        print(*all_data, sep="\r\n")
     else:
-        print("Empty data")
+        print("Empty data\n============\n")
 
 
 def confirmation(text: str): 
     confirm = input(f"Подтвердите {text} записи: y - да, n - нет\n")
-    while confirm not in ('y', 'n'):
+    while confirm not in ("y", "n"):
         print('Введены неверные данные')
         confirm = input(f"Подтвердите {text} записи: y - да, n - нет\n")
     return confirm
 
 
 def new_records():
-    global last_id
+    global last_id, all_data
     with open(file_base, 'r+', encoding='utf-8') as data:
         for line in data:
             if line != '':
-                last_id = line.split(' ', 2)[0]
-        #print('Введите фамилию, имя, отчество, номер телефона через пробел')
-        #line = f'{int(last_id) + 1} ' + ' '.join(input().split()[:4]) + '; \n'
-
-        title = input('Введите заголовок: ')
-        body = input('Введите тект заметки: ')
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        line = {'id':last_id, 'title':title, 'body':body, 'timestamp':timestamp}
-        data.write(join(line))
-
-        
-
-def save_notes():
-    with open(file_base, 'w') as f:
-        writer = csv.writer(f, delimiter = ';')
-        for note in file_base:
-            confirm = confirmation('добавление')
-            if confirm == 'y':
-                writer.writerow(note['id'], note['title'], note['bodu'], note['timestamp'])
+                last_id = line.split(';')[0]
+        file_writer = csv.writer(data, delimiter=';', lineterminator='\r')
+        title = input('Введите заголовок: ') 
+        body = input('Введите текст заметки: ')  
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        all_data = [int(last_id) + 1, title, body, timestamp]
+        confirm = confirmation('добавление')
+        if confirm == 'y':
+            file_writer.writerow(all_data)
 
 
 def find_char():
     print('Выберите характеристику:')
-    print('0 - id, 1 - фамилия, 2 - имя, 3 - отчество, 4 - номер, q - выйти')
+    print('0 - id, 1 - Заголовок, 2 - Дата, q - выйти')
     char = input()
-    while char not in ('0', '1', '2', '3', '4', 'q'):
+    while char not in ('0', '1', '2', 'q'):
         print('Введены неверные данные')
         print('Выберите характеристику:')
-        print('0 - id, 1 - фамилия, 2 - имя, 3 - отчество, 4 - номер, q - выйти')
+        print('0 - id, 1 - Заголовок, 2 - Дата, q - выйти')
         char = input()
     if char != 'q':
         inp = input('Введите значение\n')
@@ -98,12 +89,12 @@ def find_char():
 
 
 def find_records(char, inp):
-    if inp != 'q':
+    if inp !='q':
         printed = False
         with open(file_base, 'r', encoding='utf-8') as data:
             for line in data:
-                if inp == line.split(' ')[int(char)]:
-                    print(*line.split(' '))
+                if inp == line.split(';')[int(char)]:
+                    print(*line.split(';'))
                     printed = True
         if not printed:
             print("Не найдено")
@@ -133,7 +124,7 @@ def replace_record_line(replaced_line: str):
     with open(file_base, 'r', encoding='utf-8') as data:
         for line in data:
             replaced += line
-            if last_id == line.split(' ', 2)[0]:
+            if last_id == line.split(';', 2)[0]:
                 replaced = replaced.replace(line, replaced_line)
     with open(file_base, 'w', encoding='utf-8') as data:
         data.write(replaced)
@@ -143,11 +134,13 @@ def change_records():
     global  last_id
     last_id = check_id_record('изменить')
     if last_id != 'q':
-        replaced_line = f'{int(last_id)} ' + ' '.join(input('Введите фамилию, имя, отчество, номер телефона через пробел\n')
-                                                .split()[:4]) + ' \n'
+        title = input('Введите заголовок: ') 
+        body = input('Введите текст заметки: ')  
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d')
+        all_data = [last_id, title, body, timestamp]
         confirm = confirmation('изменение')
         if confirm == 'y':
-            replace_record_line(replaced_line)
+            replace_record_line(";".join(all_data)+ ' \n')
 
 
 def delete_records():
@@ -163,15 +156,17 @@ def main_menu():
     play = True
     while play:
         read_records()
-        answer = input("==================\nPhone book:\n==================\n"
+        answer = input("============\nNotes:\n"
+                       "============\n"
                        "1. Show all records\n"
                        "2. Add a record\n"
                        "3. Search a record\n"
                        "4. Change\n"
                        "5. Delete\n"
                        "6. Exp/Imp\n"
-                       "7. Exit\n==================\n"
-                       )
+                       "7. Exit\n"
+                        "============\n"
+                        )
         match answer:
             case "1":
                 show_all()
